@@ -22,7 +22,7 @@ const nodeTypes: NodeTypes = {
 
 export function ArchitectureFlow() {
   return (
-    <div className="h-[900px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+    <div data-chart-export className="h-[900px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
       <ReactFlow
         nodes={architectureNodes}
         edges={architectureEdges}

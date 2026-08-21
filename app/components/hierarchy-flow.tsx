@@ -196,6 +196,7 @@ export function HierarchyFlow({
 
   return (
     <div
+      data-chart-export
       className={`h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 ${
         className ?? ""
       }`}
