@@ -1,0 +1,570 @@
+# TechAxon Chart Development Context
+
+You are working on my TechAxon Next.js project.
+
+Your task is to create or modify charts while strictly following the existing architecture, folder structure, naming conventions, UI style, and chart-generation system described below.
+
+## 1. Project Stack
+
+- Next.js with App Router
+- React
+- TypeScript
+- Tailwind CSS
+- React Flow (`@xyflow/react`)
+- pnpm
+- Playwright
+- tsx
+- ESLint
+- Production deployment through Docker / CI/CD
+
+The project uses a component-based architecture and each chart should be modular and independently maintainable.
+
+## 2. Chart Architecture
+
+Every chart is an independent feature.
+
+Chart-specific files must stay inside that chart's own directory.
+
+Example:
+
+app/
+├── charts/
+│   └── [chartId]/
+│       └── page.tsx
+│
+├── charts-data/
+│   ├── techaxon/
+│   │   ├── data.ts
+│   │   ├── definition.ts
+│   │   └── components/
+│   │       └── ...
+│   │
+│   ├── architecture/
+│   │   ├── data.ts
+│   │   ├── definition.ts
+│   │   └── components/
+│   │       └── ...
+│   │
+│   └── another-chart/
+│       ├── data.ts
+│       ├── definition.ts
+│       └── components/
+│           └── ...
+│
+├── components/
+│   ├── hierarchy-flow.tsx
+│   ├── chart-page-layout.tsx
+│   └── other shared components
+│
+├── charts-registry.ts
+│
+scripts/
+└── generate-charts.ts
+
+public/
+└── charts/
+    ├── techaxon.png
+    ├── architecture.png
+    └── ...
+
+Important folder rule:
+
+If a component, type, data file, helper, or utility is specific to one chart, it MUST live inside that chart's directory.
+
+For example:
+
+app/charts-data/architecture/components/architecture-flow.tsx
+
+NOT:
+
+app/components/architecture-flow.tsx
+
+Shared/reusable components that are used by multiple charts belong in:
+
+app/components/
+
+Do not move chart-specific code into the shared components directory.
+
+## 3. Chart Registry
+
+The project has a central chart registry:
+
+app/charts-registry.ts
+
+It contains:
+
+export type ChartDefinition = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+export const charts: ChartDefinition[] = [
+  {
+    id: "techaxon",
+    title: "Techaxon",
+    description: "Products and services hierarchy.",
+  },
+  {
+    id: "architecture",
+    title: "System Architecture",
+    description: "Overview of the TechAxon system architecture.",
+  },
+];
+
+Whenever a new chart is created:
+
+1. Add its metadata to `charts-registry.ts`.
+2. Create its own directory under `app/charts-data/<chartId>/`.
+3. Add the chart rendering logic.
+4. Register the chart route.
+5. Make sure the chart can be exported to PNG automatically.
+6. Do not hard-code the new chart ID inside `generate-charts.ts`.
+
+The PNG generator must discover charts from the central registry.
+
+## 4. Chart Pages
+
+Each chart has its own page:
+
+/charts/<chartId>
+
+Examples:
+
+/charts/techaxon
+/charts/architecture
+/charts/deployment
+/charts/iam
+
+The page should use the existing `ChartPageLayout` component when appropriate.
+
+Do not create a completely different page layout for each chart unless there is a strong UX reason.
+
+## 5. Main Charts Overview Page
+
+The main page displays all charts in a grid.
+
+Requirements:
+
+- 3 columns on desktop
+- 3 chart cards per row
+- responsive layout on smaller screens
+- each chart is represented by a clickable card
+- clicking a card navigates to `/charts/<chartId>`
+
+The card should use the generated PNG from:
+
+/public/charts/<chartId>.png
+
+when appropriate.
+
+Do not duplicate chart metadata manually on the homepage. Use `charts-registry.ts`.
+
+## 6. PNG Generation
+
+The project automatically generates PNG files for all charts.
+
+The flow is:
+
+Chart Registry
+      ↓
+/charts/<chartId>
+      ↓
+Next.js production server
+      ↓
+Playwright
+      ↓
+[data-chart-export]
+      ↓
+PNG
+      ↓
+public/charts/<chartId>.png
+
+The generator is:
+
+scripts/generate-charts.ts
+
+The generator uses Playwright and should automatically process every chart from `charts` in:
+
+app/charts-registry.ts
+
+Do NOT maintain a second hard-coded chart list inside the PNG generator.
+
+## 7. Chart Export Area
+
+Every chart must expose the exact area that should be exported using:
+
+data-chart-export
+
+Example:
+
+<div
+  data-chart-export
+  className="..."
+>
+  ...
+</div>
+
+The PNG generator searches for:
+
+[data-chart-export]
+
+Therefore every new chart MUST contain exactly one export container with:
+
+data-chart-export
+
+Do not change this selector without also updating the PNG generator.
+
+## 8. React Flow Charts
+
+For React Flow charts, use:
+
+@xyflow/react
+
+Follow the existing React Flow architecture.
+
+Shared React Flow functionality belongs in shared components.
+
+Chart-specific node types, custom edges, data, and layout logic belong inside the chart's own folder.
+
+Example:
+
+app/charts-data/architecture/
+├── data.ts
+├── definition.ts
+└── components/
+    ├── architecture-flow.tsx
+    ├── architecture-node.tsx
+    └── ...
+
+Do not put architecture-specific components into:
+
+app/components/
+
+## 9. Visual Design
+
+Charts should have a modern, professional SaaS / technical documentation appearance.
+
+Prefer:
+
+- light background
+- low-contrast neutral colors
+- readable typography
+- subtle borders
+- subtle shadows
+- generous spacing
+- rounded corners
+- minimal visual noise
+
+Preferred chart background:
+
+#F8FAFC
+
+Preferred node background:
+
+#FFFFFF
+
+Preferred neutral border:
+
+#E2E8F0
+
+Preferred hierarchy edge:
+
+#94A3B8
+
+Preferred technical/secondary relationship:
+
+#0EA5E9
+
+Avoid:
+
+- pure black backgrounds
+- extremely bright colors
+- excessive gradients
+- excessive shadows
+- unnecessary animations
+- dense layouts
+- decorative elements that make technical relationships harder to understand
+
+The chart must be comfortable to look at for a long time.
+
+## 10. Hierarchy Charts
+
+For hierarchy charts, the main hierarchy should use neutral gray connections.
+
+Example:
+
+Techaxon
+   │
+   ├── Products
+   │      ├── Kanban
+   │      ├── LMS
+   │      ├── IAM
+   │      └── Telegram Bot
+   │
+   └── Services
+          ├── Web Development
+          └── Consulting
+
+Do not use colored/dashed lines for the main hierarchy unless there is a specific semantic reason.
+
+Secondary technical relationships may use blue connections, but only when they add meaningful information.
+
+Do not create decorative lines.
+
+If a connection visually crosses unrelated nodes or makes the chart confusing, redesign the layout instead of simply adding more styling.
+
+## 11. Product Status / Badges
+
+If a product has a special status, use a small badge rather than changing the entire node color.
+
+For example:
+
+IAM
+Open Source · Free
+
+Do not make the whole IAM node green just because it is free/open source.
+
+The product should remain visually consistent with other products.
+
+## 12. Chart Semantics
+
+Each chart should communicate ONE primary concept.
+
+Examples:
+
+### Techaxon
+
+Shows:
+
+Techaxon
+├── Products
+│   ├── Kanban
+│   ├── LMS
+│   ├── IAM
+│   └── Telegram Bot
+└── Services
+    ├── Web Development
+    └── Consulting
+
+### Architecture
+
+Shows:
+
+Users
+  ↓
+Internet
+  ↓
+Traefik
+Reverse Proxy
+TLS / Routing
+  ↓
+┌─────────────┬─────────────┬─────────────┐
+│   Kanban    │     LMS     │    Shop     │
+│   Next.js   │   Next.js   │   Next.js   │
+└─────────────┴─────────────┴─────────────┘
+                 ↓
+                IAM
+              NestJS
+        Auth / RBAC / JWT
+                 ↓
+        ┌────────┴────────┐
+        ↓                 ↓
+     CouchDB            Redis
+     Database          Cache/Queue
+
+Do not mix unrelated concepts into one chart.
+
+If a new relationship deserves a separate concept, consider creating a new chart instead.
+
+## 13. Data Separation
+
+Chart data must be separated from rendering logic.
+
+For example:
+
+app/charts-data/techaxon/
+├── data.ts
+└── components/
+    └── techaxon-flow.tsx
+
+`data.ts` should contain chart data such as:
+
+export const techaxonHierarchy = ...
+
+and:
+
+export const techaxonConnections = ...
+
+The component should be responsible for rendering.
+
+Do not hard-code large amounts of chart data directly inside the React component.
+
+## 14. TypeScript
+
+Use strict TypeScript.
+
+Avoid:
+
+any
+
+unless there is a very strong reason.
+
+Prefer existing project types and shared types.
+
+Do not duplicate types if an existing shared type already represents the same concept.
+
+## 15. Existing Shared Components
+
+Before creating a new component, check whether an existing shared component can be reused.
+
+Prefer:
+
+app/components/
+
+for truly reusable components.
+
+Examples:
+
+ChartPageLayout
+HierarchyFlow
+shared chart UI
+
+Do not create duplicate versions of these components.
+
+## 16. Existing TechAxon Chart
+
+The TechAxon hierarchy currently contains:
+
+Techaxon
+├── Products
+│   ├── Kanban
+│   ├── LMS
+│   ├── IAM
+│   │   └── Open Source · Free
+│   └── Telegram Bot
+│
+└── Services
+    ├── Web Development
+    └── Consulting
+
+All four products:
+
+Kanban
+LMS
+IAM
+Telegram Bot
+
+must be displayed at the same hierarchy level.
+
+IAM is not a parent of Kanban or LMS.
+
+## 17. Architecture Chart
+
+The current architecture concept is:
+
+Users
+   ↓
+Internet
+   ↓
+Traefik
+Reverse Proxy
+TLS / Routing
+   ↓
+┌─────────────┬─────────────┬─────────────┐
+│   Kanban    │     LMS     │    Shop     │
+│   Next.js   │   Next.js   │   Next.js   │
+└─────────────┴─────────────┴─────────────┘
+                 ↓
+                IAM
+              NestJS
+        Auth / RBAC / JWT
+                 ↓
+        ┌────────┴────────┐
+        ↓                 ↓
+     CouchDB            Redis
+     Database          Cache/Queue
+
+Use this concept unless I explicitly ask for a different architecture.
+
+## 18. Package Manager
+
+The project uses:
+
+pnpm
+
+Do not suggest npm or yarn commands unless explicitly requested.
+
+For dependencies use:
+
+pnpm add ...
+
+For dev dependencies:
+
+pnpm add -D ...
+
+## 19. Build Scripts
+
+The project uses:
+
+pnpm build
+
+and:
+
+pnpm generate:charts
+
+The chart generation uses:
+
+Playwright
+tsx
+
+The generated images go to:
+
+public/charts/
+
+Do not replace this system with a different export mechanism without explaining why.
+
+## 20. Important Development Rules
+
+When creating a new chart:
+
+1. First inspect the existing chart architecture.
+2. Reuse existing shared components.
+3. Create a dedicated folder for the chart.
+4. Keep chart-specific components inside that folder.
+5. Keep chart data separate from UI.
+6. Register the chart in `app/charts-registry.ts`.
+7. Add its `/charts/<chartId>` page handling.
+8. Add `data-chart-export` to the export container.
+9. Make sure Playwright can render it.
+10. Make sure the generated PNG is:
+    public/charts/<chartId>.png
+11. Do not create duplicate chart registries.
+12. Do not hard-code chart IDs in the PNG generator.
+13. Keep the visual language consistent with existing charts.
+14. Avoid unnecessary changes to unrelated files.
+
+## 21. How You Should Respond
+
+When I ask:
+
+"Create a new chart for X"
+
+you should:
+
+1. Determine what type of chart it should be.
+2. Explain the proposed structure briefly.
+3. Identify which files need to be created or changed.
+4. Provide complete code for the required files.
+5. Reuse existing shared components.
+6. Follow the folder architecture above.
+7. Include the registry update.
+8. Include route integration.
+9. Ensure PNG generation works automatically.
+10. Do not create unnecessary files or abstractions.
+
+If some existing project file is required to implement the chart correctly but its current content is unknown, ask me to provide that file instead of guessing.
+
+Do not redesign the existing architecture unless there is a clear technical reason.
+
+The goal is to keep the chart system scalable, modular, visually consistent, and easy to maintain as the number of charts grows.
